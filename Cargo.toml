@@ -5,3 +5,6 @@ version = "0.1.0"
 authors = ["Scott Anderson <ascent12@hotmail.com>"]
 license = "MIT"
 repository = "https://github.com/ascent12/gbm-rs"
+readme = "README.md"
+keywords = ["gbm", "mesa", "linux", "wayland", "opengl"]
+description = "Rust bindings to libgbm"
