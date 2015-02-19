@@ -122,6 +122,15 @@ impl Device {
     pub fn fd(&self) -> Fd {
         unsafe { gbm_device_get_fd(self.ptr) }
     }
+
+    /// Returns the gbm_device for the Device
+    ///
+    /// # Returns
+    ///
+    /// A pointer to the gbm_device used to create the Device.
+    pub fn c_struct(&self) -> *const gbm_device {
+        self.ptr
+    }
 }
 
 impl Drop for Device {
@@ -245,6 +254,15 @@ impl Surface {
     /// bo: The BufferObject to be released
     pub fn release_buffer(&self, bo: BufferObject) {
         unsafe { gbm_surface_release_buffer(self.ptr, bo.ptr) }
+    }
+
+    /// Returns the gbm_surface for the Surface
+    ///
+    /// # Returns
+    ///
+    /// A pointer to the gbm_surface used to create the Surface.
+    pub fn c_struct(&self) -> *const gbm_surface {
+        self.ptr
     }
 }
 
@@ -447,6 +465,15 @@ impl BufferObject {
     pub fn write<T>(&self, buf: *const T, count: usize) -> bool {
         unsafe { gbm_bo_write(self.ptr, buf as *const c_void, count as u64) == 0 }
     }
+
+    /// Returns the gbm_bo for the BufferObject
+    ///
+    /// # Returns
+    ///
+    /// A pointer to the gbm_bo used to create the BufferObject.
+    pub fn c_struct(&self) -> *const gbm_bo {
+        self.ptr
+    }
 }
 
 impl Drop for BufferObject {
@@ -471,14 +498,14 @@ pub const USE_WRITE: u32 = (1 << 3);
 //
 
 #[repr(C)]
-/// C struct to use as EGLNativeDisplayType
+/// C struct to use in foreign C functions
 pub struct gbm_device;
 #[repr(C)]
-/// C struct to use as EGLNativePixmapType
+/// C struct to use in foreign C functions
 pub struct gbm_bo;
 #[repr(C)]
-// This isn't needed for EGL. Just use a void pointer as EGLNativeWindowType.
-struct gbm_surface;
+/// C struct to use in foreign C functions
+pub struct gbm_surface;
 
 #[link(name = "gbm")]
 extern {
