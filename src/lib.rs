@@ -471,10 +471,13 @@ pub const USE_WRITE: u32 = (1 << 3);
 //
 
 #[repr(C)]
-struct gbm_device;
+/// C struct to use as EGLNativeDisplayType
+pub struct gbm_device;
 #[repr(C)]
-struct gbm_bo;
+/// C struct to use as EGLNativePixmapType
+pub struct gbm_bo;
 #[repr(C)]
+// This isn't needed for EGL. Just use a void pointer as EGLNativeWindowType.
 struct gbm_surface;
 
 #[link(name = "gbm")]
