@@ -22,11 +22,10 @@
 //!
 //! Libgbm can be used to retrieve framebuffers from GPUs in a driver-independant manner.
 
-#![crate_name = "gbm-rs"]
+#![crate_name = "gbm_rs"]
 #![crate_type = "lib"]
 
 #![feature(libc)]
-#![feature(std_misc)]
 
 extern crate libc;
 
@@ -74,7 +73,7 @@ impl Device {
     ///
     /// let device = gbm::Device::from_fd(file.as_raw_fd()).unwrap();
     /// ```
-    pub fn from_fd(fd: Fd) -> Option<Device> {
+    pub fn from_fd(fd: RawFd) -> Option<Device> {
         unsafe {
             let dev = gbm_create_device(fd);
 
@@ -119,7 +118,7 @@ impl Device {
     ///
     /// assert_eq!(fd, file.as_raw_fd());
     /// ```
-    pub fn fd(&self) -> Fd {
+    pub fn fd(&self) -> RawFd {
         unsafe { gbm_device_get_fd(self.ptr) }
     }
 
@@ -441,7 +440,7 @@ impl BufferObject {
     /// # Returns
     ///
     /// Returns a file descriptor referring to the underlying buffer
-    pub fn fd(&self) -> Fd {
+    pub fn fd(&self) -> RawFd {
         unsafe { gbm_bo_get_fd(self.ptr) }
     }
 
@@ -463,7 +462,7 @@ impl BufferObject {
     ///
     /// Returns ```true``` on success, otherwise ```false``` is returned an errno set
     pub fn write<T>(&self, buf: *const T, count: usize) -> bool {
-        unsafe { gbm_bo_write(self.ptr, buf as *const c_void, count as u64) == 0 }
+        unsafe { gbm_bo_write(self.ptr, buf as *const c_void, count) == 0 }
     }
 
     /// Returns the gbm_bo for the BufferObject
