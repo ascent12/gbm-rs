@@ -634,15 +634,17 @@ pub mod format {
 // C definitions
 //
 
-#[repr(C)]
-/// C struct to use in foreign C functions
-pub struct gbm_device;
-#[repr(C)]
-/// C struct to use in foreign C functions
-pub struct gbm_bo;
-#[repr(C)]
-/// C struct to use in foreign C functions
-pub struct gbm_surface;
+/// Representation of C opaque structure to use in foreign C functions
+#[allow(non_camel_case_types)]
+pub enum gbm_device {}
+
+/// Representation of C opaque structure to use in foreign C functions
+#[allow(non_camel_case_types)]
+pub enum gbm_bo {}
+
+/// Representation of C opaque structure to use in foreign C functions
+#[allow(non_camel_case_types)]
+pub enum gbm_surface {}
 
 #[link(name = "gbm")]
 extern {
