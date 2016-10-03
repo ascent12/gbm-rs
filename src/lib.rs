@@ -22,11 +22,10 @@
 //!
 //! Libgbm can be used to retrieve framebuffers from GPUs in a driver-independant manner.
 
-#![crate_name = "gbm-rs"]
+#![crate_name = "gbm_rs"]
 #![crate_type = "lib"]
 
 #![feature(libc)]
-#![feature(std_misc)]
 
 extern crate libc;
 
@@ -74,7 +73,7 @@ impl Device {
     ///
     /// let device = gbm::Device::from_fd(file.as_raw_fd()).unwrap();
     /// ```
-    pub fn from_fd(fd: Fd) -> Option<Device> {
+    pub fn from_fd(fd: RawFd) -> Option<Device> {
         unsafe {
             let dev = gbm_create_device(fd);
 
@@ -90,7 +89,7 @@ impl Device {
     ///
     /// # Arguments
     ///
-    /// format: The [fourcc](https://github.com/rust-lang/fourcc) code to test
+    /// format: The fourcc code to test
     ///
     /// usage: A bitmask of the usages to test the format against
     ///
@@ -119,7 +118,7 @@ impl Device {
     ///
     /// assert_eq!(fd, file.as_raw_fd());
     /// ```
-    pub fn fd(&self) -> Fd {
+    pub fn fd(&self) -> RawFd {
         unsafe { gbm_device_get_fd(self.ptr) }
     }
 
@@ -157,7 +156,7 @@ impl Surface {
     ///
     /// height: The height for the surface
     ///
-    /// format: The [fourcc](https://github.com/rust-lang/fourcc) code for the surface
+    /// format: The fourcc code for the surface
     ///
     /// flags: A bitmask of the flags for this surface
     ///
@@ -169,7 +168,7 @@ impl Surface {
     /// # Example
     /// ```ignore
     /// let surface = gbm::Surface::new(&device, 1920, 1080,
-    ///                                 fourcc!("XR24", little), // GBM_FORMAT_XRGB8888
+    ///                                 format::XRGB8888, // GBM_FORMAT_XRGB8888
     ///                                 USE_SCANOUT | USE_RENDERING);
     /// ```
     pub fn new(dev: &Device, width: u32, height: u32,
@@ -291,7 +290,7 @@ impl BufferObject {
     ///
     /// height: The height for the buffer
     ///
-    /// format: The [fourcc](https://github.com/rust-lang/fourcc) code for the surface
+    /// format: The fourcc code for the surface
     ///
     /// usage: The union of the usage flags for this buffer
     ///
@@ -303,7 +302,7 @@ impl BufferObject {
     /// # Example
     /// ```ignore
     /// let buffer = BufferObject::new(&device, 1920, 1080,
-    ///                                !fourcc("XR24", little), // GBM_FORMAT_XRGB8888
+    ///                                format::XRGB8888, // GBM_FORMAT_XRGB8888
     ///                                USE_SCANOUT | USE_RENDERING);
     /// ```
     ///                                
@@ -357,7 +356,7 @@ impl BufferObject {
     ///
     /// # Returns
     ///
-    /// The format of buffer object, as a [fourcc](https://github.com/rust-lang/fourcc) code
+    /// The format of buffer object, as a fourcc code
     pub fn format(&self) -> u32 {
         unsafe { gbm_bo_get_format(self.ptr) }
     }
@@ -441,7 +440,7 @@ impl BufferObject {
     /// # Returns
     ///
     /// Returns a file descriptor referring to the underlying buffer
-    pub fn fd(&self) -> Fd {
+    pub fn fd(&self) -> RawFd {
         unsafe { gbm_bo_get_fd(self.ptr) }
     }
 
@@ -463,7 +462,7 @@ impl BufferObject {
     ///
     /// Returns ```true``` on success, otherwise ```false``` is returned an errno set
     pub fn write<T>(&self, buf: *const T, count: usize) -> bool {
-        unsafe { gbm_bo_write(self.ptr, buf as *const c_void, count as u64) == 0 }
+        unsafe { gbm_bo_write(self.ptr, buf as *const c_void, count) == 0 }
     }
 
     /// Returns the gbm_bo for the BufferObject
@@ -493,19 +492,159 @@ pub const USE_RENDERING: u32 = (1 << 2);
 /// with USE_CURSOR, but may not work for other combinations
 pub const USE_WRITE: u32 = (1 << 3);
 
+/// Formats
+pub mod format {
+    macro_rules! fourcc_code {
+        ($a:expr, $b:expr, $c:expr, $d:expr) => {
+            ($a as u32) | (($b as u32) << 8) | (($c as u32) << 16) | (($d as u32) << 24)
+        }
+    }
+
+    // Color index
+
+    /// [7:0] C
+    pub const C8: u32 = fourcc_code!('C', '8', ' ', ' ');
+
+    // 8 bpp RGB
+
+    /// [7:0] R:G:B 3:3:2
+    pub const RGB332: u32 = fourcc_code!('R', 'G', 'B', '8');
+    /// [7:0] B:G:R 2:3:3
+    pub const BGR233: u32 = fourcc_code!('B', 'G', 'R', '8');
+
+    // 16 bpp RGB
+
+    /// [15:0] x:R:G:B 4:4:4:4 little endian
+    pub const XRGB4444: u32 = fourcc_code!('X', 'R', '1', '2');
+    /// [15:0] x:B:G:R 4:4:4:4 little endian
+    pub const XBGR4444: u32 = fourcc_code!('X', 'B', '1', '2');
+    /// [15:0] R:G:B:x 4:4:4:4 little endian
+    pub const RGBX4444: u32 = fourcc_code!('R', 'X', '1', '2');
+    /// [15:0] B:G:R:x 4:4:4:4 little endian
+    pub const BGRX4444: u32 = fourcc_code!('B', 'X', '1', '2');
+
+    /// [15:0] A:R:G:B 4:4:4:4 little endian
+    pub const ARGB4444: u32 = fourcc_code!('A', 'R', '1', '2');
+    /// [15:0] A:B:G:R 4:4:4:4 little endian
+    pub const ABGR4444: u32 = fourcc_code!('A', 'B', '1', '2');
+    /// [15:0] R:G:B:A 4:4:4:4 little endian
+    pub const RGBA4444: u32 = fourcc_code!('R', 'A', '1', '2');
+    /// [15:0] B:G:R:A 4:4:4:4 little endian
+    pub const BGRA4444: u32 = fourcc_code!('B', 'A', '1', '2');
+
+    /// [15:0] x:R:G:B 1:5:5:5 little endian
+    pub const XRGB1555: u32 = fourcc_code!('X', 'R', '1', '5');
+    /// [15:0] x:B:G:R 1:5:5:5 little endian
+    pub const XBGR1555: u32 = fourcc_code!('X', 'B', '1', '5');
+    /// [15:0] R:G:B:x 5:5:5:1 little endian
+    pub const RGBX5551: u32 = fourcc_code!('R', 'X', '1', '5');
+    /// [15:0] B:G:R:x 5:5:5:1 little endian
+    pub const BGRX5551: u32 = fourcc_code!('B', 'X', '1', '5');
+
+    /// [15:0] A:R:G:B 1:5:5:5 little endian
+    pub const ARGB1555: u32 = fourcc_code!('A', 'R', '1', '5');
+    /// [15:0] A:B:G:R 1:5:5:5 little endian
+    pub const ABGR1555: u32 = fourcc_code!('A', 'B', '1', '5');
+    /// [15:0] R:G:B:A 5:5:5:1 little endian
+    pub const RGBA5551: u32 = fourcc_code!('R', 'A', '1', '5');
+    /// [15:0] B:G:R:A 5:5:5:1 little endian
+    pub const BGRA5551: u32 = fourcc_code!('B', 'A', '1', '5');
+
+    /// [15:0] R:G:B 5:6:5 little endian
+    pub const RGB565: u32 = fourcc_code!('R', 'G', '1', '6');
+    /// [15:0] B:G:R 5:6:5 little endian
+    pub const BGR565: u32 = fourcc_code!('B', 'G', '1', '6');
+
+    // 24 bpp RGB
+
+    /// [23:0] R:G:B little endian
+    pub const RGB888: u32 = fourcc_code!('R', 'G', '2', '4');
+    /// [23:0] B:G:R little endian
+    pub const BGR888: u32 = fourcc_code!('B', 'G', '2', '4');
+
+    // 32 bpp RGB
+
+    /// [31:0] x:R:G:B 8:8:8:8 little endian
+    pub const XRGB8888: u32 = fourcc_code!('X', 'R', '2', '4');
+    /// [31:0] x:B:G:R 8:8:8:8 little endian
+    pub const XBGR8888: u32 = fourcc_code!('X', 'B', '2', '4');
+    /// [31:0] R:G:B:x 8:8:8:8 little endian
+    pub const RGBX8888: u32 = fourcc_code!('R', 'X', '2', '4');
+    /// [31:0] B:G:R:x 8:8:8:8 little endian
+    pub const BGRX8888: u32 = fourcc_code!('B', 'X', '2', '4');
+
+    /// [31:0] A:R:G:B 8:8:8:8 little endian
+    pub const ARGB8888: u32 = fourcc_code!('A', 'R', '2', '4');
+    /// [31:0] A:B:G:R 8:8:8:8 little endian
+    pub const ABGR8888: u32 = fourcc_code!('A', 'B', '2', '4');
+    /// [31:0] R:G:B:A 8:8:8:8 little endian
+    pub const RGBA8888: u32 = fourcc_code!('R', 'A', '2', '4');
+    /// [31:0] B:G:R:A 8:8:8:8 little endian
+    pub const BGRA8888: u32 = fourcc_code!('B', 'A', '2', '4');
+
+    /// [31:0] x:R:G:B 2:10:10:10 little endian
+    pub const XRGB2101010: u32 = fourcc_code!('X', 'R', '3', '0');
+    /// [31:0] x:B:G:R 2:10:10:10 little endian
+    pub const XBGR2101010: u32 = fourcc_code!('X', 'B', '3', '0');
+    /// [31:0] R:G:B:x 10:10:10:2 little endian
+    pub const RGBX1010102: u32 = fourcc_code!('R', 'X', '3', '0');
+    /// [31:0] B:G:R:x 10:10:10:2 little endian
+    pub const BGRX1010102: u32 = fourcc_code!('B', 'X', '3', '0');
+
+    /// [31:0] A:R:G:B 2:10:10:10 little endian
+    pub const ARGB2101010: u32 = fourcc_code!('A', 'R', '3', '0');
+    /// [31:0] A:B:G:R 2:10:10:10 little endian
+    pub const ABGR2101010: u32 = fourcc_code!('A', 'B', '3', '0');
+    /// [31:0] R:G:B:A 10:10:10:2 little endian
+    pub const RGBA1010102: u32 = fourcc_code!('R', 'A', '3', '0');
+    /// [31:0] B:G:R:A 10:10:10:2 little endian
+    pub const BGRA1010102: u32 = fourcc_code!('B', 'A', '3', '0');
+
+    // packed YCbCr
+
+    /// [31:0] Cr0:Y1:Cb0:Y0 8:8:8:8 little endian
+    pub const YUYV: u32 = fourcc_code!('Y', 'U', 'Y', 'V');
+    /// [31:0] Cb0:Y1:Cr0:Y0 8:8:8:8 little endian
+    pub const YVYU: u32 = fourcc_code!('Y', 'V', 'Y', 'U');
+    /// [31:0] Y1:Cr0:Y0:Cb0 8:8:8:8 little endian
+    pub const UYVY: u32 = fourcc_code!('U', 'Y', 'V', 'Y');
+    /// [31:0] Y1:Cb0:Y0:Cr0 8:8:8:8 little endian
+    pub const VYUY: u32 = fourcc_code!('V', 'Y', 'U', 'Y');
+
+    /// [31:0] A:Y:Cb:Cr 8:8:8:8 little endian
+    pub const AYUV: u32 = fourcc_code!('A', 'Y', 'U', 'V');
+
+    // 2 plane YCbCr
+    // index 0 = Y plane, [7:0] Y
+    // index 1 = Cr:Cb plane, [15:0] Cr:Cb little endian
+    // or
+    // index 1 = Cb:Cr plane, [15:0] Cb:Cr little endian
+
+    /// 2x2 subsampled Cr:Cb plane
+    pub const NV12: u32 = fourcc_code!('N', 'V', '1', '2');
+    /// 2x2 subsampled Cb:Cr plane
+    pub const NV21: u32 = fourcc_code!('N', 'V', '2', '1');
+    /// 2x1 subsampled Cr:Cb plane
+    pub const NV16: u32 = fourcc_code!('N', 'V', '1', '6');
+    /// 2x1 subsampled Cb:Cr plane
+    pub const NV61: u32 = fourcc_code!('N', 'V', '6', '1');
+}
+
 //
 // C definitions
 //
 
-#[repr(C)]
-/// C struct to use in foreign C functions
-pub struct gbm_device;
-#[repr(C)]
-/// C struct to use in foreign C functions
-pub struct gbm_bo;
-#[repr(C)]
-/// C struct to use in foreign C functions
-pub struct gbm_surface;
+/// Representation of C opaque structure to use in foreign C functions
+#[allow(non_camel_case_types)]
+pub enum gbm_device {}
+
+/// Representation of C opaque structure to use in foreign C functions
+#[allow(non_camel_case_types)]
+pub enum gbm_bo {}
+
+/// Representation of C opaque structure to use in foreign C functions
+#[allow(non_camel_case_types)]
+pub enum gbm_surface {}
 
 #[link(name = "gbm")]
 extern {
