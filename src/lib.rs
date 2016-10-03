@@ -63,13 +63,12 @@ impl Device {
     ///
     /// # Example
     /// ```
-    /// extern crate "gbm-rs" as gbm;
+    /// extern crate gbm_rs as gbm;
     ///
-    /// use std::old_io::{File, Open, ReadWrite};
+    /// use std::fs::OpenOptions;
     /// use std::os::unix::prelude::*;
     ///
-    /// let path = Path::new("/dev/dri/card0");
-    /// let file = File::open_mode(&path, Open, ReadWrite).unwrap();
+    /// let file = OpenOptions::new().read(true).write(true).open("/dev/dri/card0").unwrap();
     ///
     /// let device = gbm::Device::from_fd(file.as_raw_fd()).unwrap();
     /// ```
@@ -108,11 +107,10 @@ impl Device {
     ///
     /// # Example
     /// ```
-    /// # extern crate "gbm-rs" as gbm;
-    /// # use std::old_io::*;
+    /// # extern crate gbm_rs as gbm;
+    /// # use std::fs::OpenOptions;
     /// # use std::os::unix::prelude::*;
-    /// # let path = Path::new("/dev/dri/card0");
-    /// # let file = File::open_mode(&path, Open, ReadWrite).unwrap();
+    /// # let file = OpenOptions::new().read(true).write(true).open("/dev/dri/card0").unwrap();
     /// # let device = gbm::Device::from_fd(file.as_raw_fd()).unwrap();
     /// let fd = device.fd();
     ///
@@ -166,10 +164,15 @@ impl Surface {
     /// If an error occurs during allocation ```None``` will be returned.
     ///
     /// # Example
-    /// ```ignore
+    /// ```
+    /// # extern crate gbm_rs as gbm;
+    /// # use std::fs::OpenOptions;
+    /// # use std::os::unix::prelude::*;
+    /// # let file = OpenOptions::new().read(true).write(true).open("/dev/dri/card0").unwrap();
+    /// # let device = gbm::Device::from_fd(file.as_raw_fd()).unwrap();
     /// let surface = gbm::Surface::new(&device, 1920, 1080,
-    ///                                 format::XRGB8888, // GBM_FORMAT_XRGB8888
-    ///                                 USE_SCANOUT | USE_RENDERING);
+    ///                                 gbm::format::XRGB8888, // GBM_FORMAT_XRGB8888
+    ///                                 gbm::USE_SCANOUT | gbm::USE_RENDERING).unwrap();
     /// ```
     pub fn new(dev: &Device, width: u32, height: u32,
                        format: u32, flags: u32) -> Option<Surface> {
@@ -302,8 +305,8 @@ impl BufferObject {
     /// # Example
     /// ```ignore
     /// let buffer = BufferObject::new(&device, 1920, 1080,
-    ///                                format::XRGB8888, // GBM_FORMAT_XRGB8888
-    ///                                USE_SCANOUT | USE_RENDERING);
+    ///                                gbm::format::XRGB8888, // GBM_FORMAT_XRGB8888
+    ///                                gbm::USE_SCANOUT | gbm::USE_RENDERING);
     /// ```
     ///                                
     pub fn new(dev: &Device, width: u32, height: u32,
