@@ -25,8 +25,6 @@
 #![crate_name = "gbm_rs"]
 #![crate_type = "lib"]
 
-#![feature(libc)]
-
 extern crate libc;
 
 use std::os::unix::prelude::*;

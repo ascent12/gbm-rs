@@ -8,3 +8,6 @@ repository = "https://github.com/ascent12/gbm-rs"
 readme = "README.md"
 keywords = ["gbm", "mesa", "linux", "wayland", "opengl"]
 description = "Rust bindings to libgbm"
+
+[dependencies]
+libc = "0.2.16"
